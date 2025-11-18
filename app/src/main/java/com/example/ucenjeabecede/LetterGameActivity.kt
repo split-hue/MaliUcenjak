@@ -59,49 +59,55 @@ fun LetterGameScreen(mode: String) {
 
     var matchPercent by remember { mutableStateOf(0f) }
     var letterPath by remember { mutableStateOf(Path()) }
-    var currentLetter by remember { mutableStateOf("") }
 
     // Observe DataStore progress
     val progress by repo.progressFlow.collectAsState(initial = Progress())
-    val completedLetters = remember(progress) { progress.completedLetters.toMutableList() }
 
+    // Sorted list of asset letters
     val assetLetters = remember {
-        (context.assets.list("abeceda") ?: arrayOf("A")).map { it.removeSuffix(".svg") }
+        (context.assets.list("abeceda") ?: arrayOf("A")).map { it.removeSuffix(".svg") }.sorted()
     }
 
-    var newModeIndex by remember { mutableStateOf(0) }
+    // Current letter
+    var currentLetter by remember { mutableStateOf("") }
+    var isInitialized by remember { mutableStateOf(false) }
 
-    // Pick starting letter
-    LaunchedEffect(mode, progress) {
-        when (mode) {
-            "repeat" -> {
-                currentLetter =
-                    if (completedLetters.isNotEmpty()) completedLetters.random() else ""
-            }
-            "new" -> {
-                val sorted = assetLetters.sorted()
-                newModeIndex = sorted.indexOfFirst { it !in completedLetters }
-                if (newModeIndex == -1) newModeIndex = 0
-                currentLetter = sorted.getOrNull(newModeIndex) ?: ""
-            }
+    // --- Update letterPath whenever currentLetter changes ---
+    LaunchedEffect(currentLetter, context) {
+        if (currentLetter.isNotEmpty()) {
+            val rawPath = loadSvgPath(context, "$currentLetter.svg")
+            letterPath = normalizePathToCanvas(rawPath, Size(1080f, 1920f))
+        } else {
+            letterPath = Path()
         }
     }
 
+    // Load next letter
     fun loadNextLetter() {
         segments.clear()
         currentSegment.clear()
         matchPercent = 0f
-        letterPath = Path()
 
-        when (mode) {
-            "repeat" -> {
-                currentLetter =
-                    if (completedLetters.isNotEmpty()) completedLetters.random() else ""
-            }
-            "new" -> {
-                val sorted = assetLetters.sorted()
-                if (newModeIndex < sorted.lastIndex) newModeIndex++
-                currentLetter = sorted.getOrNull(newModeIndex) ?: ""
+        val learned = progress.completedLetters.toSet()
+        currentLetter = when (mode) {
+            "repeat" -> learned.randomOrNull() ?: ""
+            "new" -> assetLetters.firstOrNull { it !in learned } ?: ""
+            else -> ""
+        }
+    }
+
+    // --- Load initial letter only once when screen opens ---
+    LaunchedEffect(Unit) {
+        // Wait for progress to be loaded
+        repo.progressFlow.collect { loadedProgress ->
+            if (!isInitialized) {
+                isInitialized = true
+                val learned = loadedProgress.completedLetters.toSet()
+                currentLetter = when (mode) {
+                    "repeat" -> learned.randomOrNull() ?: ""
+                    "new" -> assetLetters.firstOrNull { it !in learned } ?: ""
+                    else -> ""
+                }
             }
         }
     }
@@ -125,13 +131,8 @@ fun LetterGameScreen(mode: String) {
             }
     ) {
 
-        // Canvas
+        // --- Canvas ---
         Canvas(modifier = Modifier.fillMaxSize()) {
-            if (letterPath.isEmpty && currentLetter.isNotEmpty()) {
-                val rawPath = loadSvgPath(context, "$currentLetter.svg")
-                letterPath = normalizePathToCanvas(rawPath, size)
-            }
-
             if (!letterPath.isEmpty) {
                 drawPath(
                     path = letterPath,
@@ -145,37 +146,24 @@ fun LetterGameScreen(mode: String) {
             drawSegmentWithFeedback(currentSegment, region)
         }
 
-        // DOMOV button
+        // --- Buttons ---
         Button(
-            onClick = {
-                context.startActivity(
-                    android.content.Intent(context, MainMenuActivity::class.java)
-                )
-            },
+            onClick = { context.startActivity(android.content.Intent(context, MainMenuActivity::class.java)) },
             modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
-        ) {
-            Text("Domov")
-        }
+        ) { Text("Domov") }
 
-        // PREVERI button
         Button(
             onClick = {
-                matchPercent = calculateMatchPercentInside(
-                    segments.flatten() + currentSegment,
-                    letterPath
-                )
+                matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
                 if (matchPercent >= 100f && currentLetter.isNotEmpty()) {
-                    coroutineScope.launch {
-                        repo.addLetter(currentLetter)
+                    if (currentLetter !in progress.completedLetters) {
+                        coroutineScope.launch { repo.addLetter(currentLetter) }
                     }
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
-        ) {
-            Text("Preveri")
-        }
+        ) { Text("Preveri") }
 
-        // POBRIŠI button
         Button(
             onClick = {
                 segments.clear()
@@ -183,37 +171,36 @@ fun LetterGameScreen(mode: String) {
                 matchPercent = 0f
             },
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-        ) {
-            Text("Pobriši")
-        }
+        ) { Text("Pobriši") }
 
-        // NEXT LETTER button
-        val repeatButtonEnabled = mode != "repeat" || completedLetters.isNotEmpty()
+        val repeatEnabled = mode != "repeat" || progress.completedLetters.isNotEmpty()
         Button(
             onClick = { loadNextLetter() },
             modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            enabled = repeatButtonEnabled
-        ) {
-            Text("→")
-        }
+            enabled = repeatEnabled
+        ) { Text("→") }
 
-        // Matching %
+        // --- Info Texts ---
         Text(
             text = "Ujemanje: ${matchPercent.toInt()}%",
             modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
         )
 
-        // No letters message
-        if (mode == "repeat" && completedLetters.isEmpty()) {
-            Text(
-                "Ne poznam še nobene črke",
-                modifier = Modifier.align(Alignment.Center)
-            )
+        // Debug: show current letter
+        Text(
+            text = "Črka: $currentLetter",
+            color = Color.Red,
+            modifier = Modifier.align(Alignment.Center)
+        )
+
+        // Message if no learned letters in repeat mode
+        if (mode == "repeat" && progress.completedLetters.isEmpty()) {
+            Text("Ne poznam še nobene črke", modifier = Modifier.align(Alignment.Center))
         }
     }
 }
 
-// Drawing helpers
+// --- Drawing helpers ---
 fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
     if (segment.size > 1) {
         for (i in 0 until segment.size - 1) {
@@ -229,9 +216,7 @@ fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
 
 fun loadSvgPath(context: Context, fileName: String): Path {
     return try {
-        val svgText =
-            context.assets.open("abeceda/$fileName").bufferedReader().use { it.readText() }
-
+        val svgText = context.assets.open("abeceda/$fileName").bufferedReader().use { it.readText() }
         val regex = Regex("""<path[^>]*d="([^"]+)"""")
         val matches = regex.findAll(svgText)
         val combinedPath = Path()
@@ -256,10 +241,8 @@ fun normalizePathToCanvas(path: Path, canvasSize: Size, padding: Float = 50f): P
     val scaleY = (canvasSize.height - 2 * padding) / bounds.height()
     val scale = min(scaleX, scaleY)
 
-    val dx =
-        -bounds.left * scale + (canvasSize.width - bounds.width() * scale) / 2f
-    val dy =
-        -bounds.top * scale + (canvasSize.height - bounds.height() * scale) / 2f
+    val dx = -bounds.left * scale + (canvasSize.width - bounds.width() * scale) / 2f
+    val dy = -bounds.top * scale + (canvasSize.height - bounds.height() * scale) / 2f
 
     val matrix = Matrix().apply {
         setScale(scale, scale)
@@ -287,14 +270,6 @@ fun Path.toRegion(): Region {
     val bounds = RectF()
     androidPath.computeBounds(bounds, true)
     val region = Region()
-    region.setPath(
-        androidPath,
-        Region(
-            bounds.left.toInt(),
-            bounds.top.toInt(),
-            bounds.right.toInt(),
-            bounds.bottom.toInt()
-        )
-    )
+    region.setPath(androidPath, Region(bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt()))
     return region
 }

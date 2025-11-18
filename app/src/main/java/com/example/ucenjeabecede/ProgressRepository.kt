@@ -32,4 +32,14 @@ class ProgressRepository(context: Context) {
     suspend fun reset() {
         store.updateData { Progress() }
     }
+//****************************************to je sam za teste
+    suspend fun setLetters(letters: List<String>) {
+        store.updateData { Progress(letters) }
+    }
+
+    suspend fun clearLetters() {
+        store.updateData { Progress(emptyList()) }
+    }
+
+
 }
