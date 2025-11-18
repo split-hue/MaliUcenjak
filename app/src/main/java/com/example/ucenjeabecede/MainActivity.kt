@@ -15,6 +15,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
+import kotlinx.serialization.InternalSerializationApi
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -28,16 +29,13 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@OptIn(InternalSerializationApi::class)
 @Composable
 fun WelcomeScreen() {
     val context = LocalContext.current
 
     var completedLetters by remember { mutableStateOf(listOf<String>()) }
 
-    // Osvežimo seznam ob vsakem prikazu
-    LaunchedEffect(Unit) {
-        completedLetters = ProgressManager.load(context).completedLetters
-    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Column(

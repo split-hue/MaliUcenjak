@@ -28,6 +28,8 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
+import kotlinx.coroutines.launch
+import kotlinx.serialization.InternalSerializationApi
 import kotlin.math.min
 
 class LetterGameActivity : ComponentActivity() {
@@ -45,9 +47,12 @@ class LetterGameActivity : ComponentActivity() {
     }
 }
 
+@OptIn(InternalSerializationApi::class)
 @Composable
 fun LetterGameScreen(mode: String) {
     val context = LocalContext.current
+    val repo = remember { ProgressRepository(context) }
+    val coroutineScope = rememberCoroutineScope()
 
     val segments = remember { mutableStateListOf<List<Offset>>() }
     val currentSegment = remember { mutableStateListOf<Offset>() }
@@ -56,10 +61,9 @@ fun LetterGameScreen(mode: String) {
     var letterPath by remember { mutableStateOf(Path()) }
     var currentLetter by remember { mutableStateOf("") }
 
-    // Observable seznam naučenih črk
-    var completedLetters by remember {
-        mutableStateOf(ProgressManager.load(context).completedLetters.toMutableList())
-    }
+    // Observe DataStore progress
+    val progress by repo.progressFlow.collectAsState(initial = Progress())
+    val completedLetters = remember(progress) { progress.completedLetters.toMutableList() }
 
     val assetLetters = remember {
         (context.assets.list("abeceda") ?: arrayOf("A")).map { it.removeSuffix(".svg") }
@@ -67,11 +71,12 @@ fun LetterGameScreen(mode: String) {
 
     var newModeIndex by remember { mutableStateOf(0) }
 
-    // Začetna črka ob zagonu
-    LaunchedEffect(Unit) {
+    // Pick starting letter
+    LaunchedEffect(mode, progress) {
         when (mode) {
             "repeat" -> {
-                currentLetter = if (completedLetters.isNotEmpty()) completedLetters.random() else ""
+                currentLetter =
+                    if (completedLetters.isNotEmpty()) completedLetters.random() else ""
             }
             "new" -> {
                 val sorted = assetLetters.sorted()
@@ -82,7 +87,6 @@ fun LetterGameScreen(mode: String) {
         }
     }
 
-    // Funkcija za nalaganje naslednje črke
     fun loadNextLetter() {
         segments.clear()
         currentSegment.clear()
@@ -91,7 +95,8 @@ fun LetterGameScreen(mode: String) {
 
         when (mode) {
             "repeat" -> {
-                currentLetter = if (completedLetters.isNotEmpty()) completedLetters.random() else ""
+                currentLetter =
+                    if (completedLetters.isNotEmpty()) completedLetters.random() else ""
             }
             "new" -> {
                 val sorted = assetLetters.sorted()
@@ -119,6 +124,7 @@ fun LetterGameScreen(mode: String) {
                 )
             }
     ) {
+
         // Canvas
         Canvas(modifier = Modifier.fillMaxSize()) {
             if (letterPath.isEmpty && currentLetter.isNotEmpty()) {
@@ -139,29 +145,29 @@ fun LetterGameScreen(mode: String) {
             drawSegmentWithFeedback(currentSegment, region)
         }
 
-        // DOMOV zgoraj desno
+        // DOMOV button
         Button(
             onClick = {
                 context.startActivity(
                     android.content.Intent(context, MainMenuActivity::class.java)
                 )
             },
-            modifier = Modifier.align(Alignment.TopEnd).padding(top = 16.dp, end = 16.dp)
+            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
         ) {
             Text("Domov")
         }
 
-        // PREVERI spodaj sredina
+        // PREVERI button
         Button(
             onClick = {
                 matchPercent = calculateMatchPercentInside(
                     segments.flatten() + currentSegment,
                     letterPath
                 )
-                if (matchPercent >= 100f && currentLetter.isNotEmpty() && currentLetter !in completedLetters) {
-                    completedLetters.add(currentLetter)
-                    // Shrani pravilno rešeno črko
-                    ProgressManager.save(context, Progress(completedLetters))
+                if (matchPercent >= 100f && currentLetter.isNotEmpty()) {
+                    coroutineScope.launch {
+                        repo.addLetter(currentLetter)
+                    }
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
@@ -169,7 +175,7 @@ fun LetterGameScreen(mode: String) {
             Text("Preveri")
         }
 
-        // POBRIŠI spodaj levo
+        // POBRIŠI button
         Button(
             onClick = {
                 segments.clear()
@@ -181,33 +187,33 @@ fun LetterGameScreen(mode: String) {
             Text("Pobriši")
         }
 
-        // NASLEDNJA ČRKA → spodaj desno
+        // NEXT LETTER button
         val repeatButtonEnabled = mode != "repeat" || completedLetters.isNotEmpty()
         Button(
             onClick = { loadNextLetter() },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(end = 16.dp, bottom = 16.dp),
+            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
             enabled = repeatButtonEnabled
         ) {
             Text("→")
         }
 
-        // Ujemanje zgoraj sredina
+        // Matching %
         Text(
             text = "Ujemanje: ${matchPercent.toInt()}%",
             modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
         )
 
-        // Če repeat mode in ni naučenih črk
+        // No letters message
         if (mode == "repeat" && completedLetters.isEmpty()) {
             Text(
                 "Ne poznam še nobene črke",
-                modifier = Modifier.align(Alignment.Center).padding(16.dp)
+                modifier = Modifier.align(Alignment.Center)
             )
         }
     }
 }
 
-// --- Funkcije za risanje, nalaganje SVG in izračun ---
+// Drawing helpers
 fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
     if (segment.size > 1) {
         for (i in 0 until segment.size - 1) {
@@ -223,8 +229,8 @@ fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
 
 fun loadSvgPath(context: Context, fileName: String): Path {
     return try {
-        val assetManager = context.assets
-        val svgText = assetManager.open("abeceda/$fileName").bufferedReader().use { it.readText() }
+        val svgText =
+            context.assets.open("abeceda/$fileName").bufferedReader().use { it.readText() }
 
         val regex = Regex("""<path[^>]*d="([^"]+)"""")
         val matches = regex.findAll(svgText)
@@ -250,8 +256,10 @@ fun normalizePathToCanvas(path: Path, canvasSize: Size, padding: Float = 50f): P
     val scaleY = (canvasSize.height - 2 * padding) / bounds.height()
     val scale = min(scaleX, scaleY)
 
-    val dx = -bounds.left * scale + (canvasSize.width - bounds.width() * scale) / 2f
-    val dy = -bounds.top * scale + (canvasSize.height - bounds.height() * scale) / 2f
+    val dx =
+        -bounds.left * scale + (canvasSize.width - bounds.width() * scale) / 2f
+    val dy =
+        -bounds.top * scale + (canvasSize.height - bounds.height() * scale) / 2f
 
     val matrix = Matrix().apply {
         setScale(scale, scale)
@@ -271,7 +279,7 @@ fun calculateMatchPercentInside(userPath: List<Offset>, letterPath: Path): Float
     val region = letterPath.toRegion()
     var insideCount = 0
     for (p in userPath) if (region.contains(p.x.toInt(), p.y.toInt())) insideCount++
-    return (insideCount.toFloat() / userPath.size.toFloat()) * 100f
+    return insideCount.toFloat() / userPath.size * 100f
 }
 
 fun Path.toRegion(): Region {
@@ -281,7 +289,12 @@ fun Path.toRegion(): Region {
     val region = Region()
     region.setPath(
         androidPath,
-        Region(bounds.left.toInt(), bounds.top.toInt(), bounds.right.toInt(), bounds.bottom.toInt())
+        Region(
+            bounds.left.toInt(),
+            bounds.top.toInt(),
+            bounds.right.toInt(),
+            bounds.bottom.toInt()
+        )
     )
     return region
 }
