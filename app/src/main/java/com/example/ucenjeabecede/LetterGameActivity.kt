@@ -259,10 +259,76 @@ fun normalizePathToCanvas(path: Path, canvasSize: Size, padding: Float = 50f): P
 
 fun calculateMatchPercentInside(userPath: List<Offset>, letterPath: Path): Float {
     if (userPath.isEmpty()) return 0f
+
+    val androidPath = letterPath.asAndroidPath()
+    val bounds = RectF()
+    androidPath.computeBounds(bounds, true)
+
+    // Če meje niso veljavne, vrni 0
+    if (bounds.isEmpty || bounds.height() <= 0) return 0f
+
     val region = letterPath.toRegion()
-    var insideCount = 0
-    for (p in userPath) if (region.contains(p.x.toInt(), p.y.toInt())) insideCount++
-    return insideCount.toFloat() / userPath.size * 100f
+
+    // Preveri če so VSE točke znotraj mej - če ne, ne more biti 100%
+    var pointsOutside = 0
+    var pointsInside = 0
+    for (p in userPath) {
+        if (region.contains(p.x.toInt(), p.y.toInt())) {
+            pointsInside++
+        } else {
+            pointsOutside++
+        }
+    }
+
+    // Če je več kot 5% točk izven mej, takoj vrni nižji %
+    val outsidePercent = (pointsOutside.toFloat() / userPath.size) * 100f
+    if (outsidePercent > 5f) {
+        // Vrni maksimalno 95% če riše izven mej
+        return (95f * (pointsInside.toFloat() / userPath.size)).coerceAtMost(95f)
+    }
+
+    // Grid spacing - preverjamo vsako vrstico (lahko prilagodiš)
+    val rowSpacing = 5f
+    val edgeTolerance = 80 // Toleranca na vrhu in dnu (v pixlih)
+    val topY = bounds.top.toInt() + edgeTolerance
+    val bottomY = bounds.bottom.toInt() - edgeTolerance
+
+    // Najdi vse Y koordinate ki jih uporabnik narisal
+    val userYCoords = userPath.map { it.y.toInt() }.toSet()
+
+    // Preveri koliko vrstic je pokritih
+    var totalRows = 0
+    var coveredRows = 0
+
+    var y = topY
+    while (y <= bottomY) {
+        // Preveri če ta vrstica seka črko (tj. ali ima črka vsaj en pixel v tej vrstici)
+        var rowIntersectsLetter = false
+        for (x in bounds.left.toInt()..bounds.right.toInt()) {
+            if (region.contains(x, y)) {
+                rowIntersectsLetter = true
+                break
+            }
+        }
+
+        if (rowIntersectsLetter) {
+            totalRows++
+            // Preveri če je uporabnik narisal v tej vrstici (z tolerance)
+            val tolerance = rowSpacing.toInt() + 5
+            val rowCovered = userYCoords.any { userY ->
+                userY in (y - tolerance)..(y + tolerance)
+            }
+            if (rowCovered) coveredRows++
+        }
+
+        y += rowSpacing.toInt()
+    }
+
+    return if (totalRows > 0) {
+        (coveredRows.toFloat() / totalRows) * 100f
+    } else {
+        0f
+    }
 }
 
 fun Path.toRegion(): Region {
