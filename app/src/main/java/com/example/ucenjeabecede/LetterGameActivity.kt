@@ -31,10 +31,13 @@ import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 import kotlin.math.min
+import java.text.Collator
+import java.util.Locale
 
 class LetterGameActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        requestPermissions(arrayOf(android.Manifest.permission.RECORD_AUDIO), 1)
         enableEdgeToEdge()
 
         val mode = intent.getStringExtra("mode") ?: "repeat"
@@ -63,14 +66,24 @@ fun LetterGameScreen(mode: String) {
     // Observe DataStore progress
     val progress by repo.progressFlow.collectAsState(initial = Progress())
 
-    // Sorted list of asset letters
+    // urejen list v SLO
+    val collator = Collator.getInstance(Locale("sl", "SI")) // slovenski locale
     val assetLetters = remember {
-        (context.assets.list("abeceda") ?: arrayOf("A")).map { it.removeSuffix(".svg") }.sorted()
+        (context.assets.list("abeceda") ?: arrayOf("A"))
+            .map { it.removeSuffix(".svg") }
+            .sortedWith { a, b -> collator.compare(a, b) }
     }
 
     // Current letter
     var currentLetter by remember { mutableStateOf("") }
     var isInitialized by remember { mutableStateOf(false) }
+
+    //za glas-to-text
+    var showSpeechDialog by remember { mutableStateOf(false) }
+    var speechCorrect by remember { mutableStateOf<Boolean?>(null) }
+
+    var lastSpoken by remember { mutableStateOf("") }
+
 
     // --- Update letterPath whenever currentLetter changes ---
     LaunchedEffect(currentLetter, context) {
@@ -155,11 +168,12 @@ fun LetterGameScreen(mode: String) {
         Button(
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
-                if (matchPercent >= 100f && currentLetter.isNotEmpty()) {
-                    if (currentLetter !in progress.completedLetters) {
-                        coroutineScope.launch { repo.addLetter(currentLetter) }
-                    }
+                if (matchPercent >= 95f && currentLetter.isNotEmpty()) {
+
+                    // Prikaži dialog za govor
+                    showSpeechDialog = true
                 }
+
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
         ) { Text("Preveri") }
@@ -197,6 +211,32 @@ fun LetterGameScreen(mode: String) {
         if (mode == "repeat" && progress.completedLetters.isEmpty()) {
             Text("Ne poznam še nobene črke", modifier = Modifier.align(Alignment.Center))
         }
+        if (showSpeechDialog) {
+            SpeechDialog(
+                letter = currentLetter,
+                onResult = { spoken ->
+                    lastSpoken = spoken
+                    speechCorrect = spoken.equals(currentLetter, ignoreCase = true)
+
+                    // SHRAMBA: samo če je govor pravilen
+                    if (speechCorrect == true && currentLetter !in progress.completedLetters) {
+                        coroutineScope.launch { repo.addLetter(currentLetter) }
+                    }
+                },
+                onClose = {
+                    showSpeechDialog = false
+                }
+            )
+        }
+        speechCorrect?.let { ok ->
+            Text(
+                text = "Govor: \"$lastSpoken\"",
+                color = Color.Magenta,
+                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+            )
+
+        }
+
     }
 }
 
@@ -264,13 +304,12 @@ fun calculateMatchPercentInside(userPath: List<Offset>, letterPath: Path): Float
     val bounds = RectF()
     androidPath.computeBounds(bounds, true)
 
-    // Če meje niso veljavne, vrni 0
-    if (bounds.isEmpty || bounds.height() <= 0) return 0f
+    if (bounds.isEmpty || bounds.height() <= 0) return 0f// Če meje niso veljavne, vrni 0
 
     val region = letterPath.toRegion()
 
-    // Preveri če so VSE točke znotraj mej - če ne, ne more biti 100%
-    var pointsOutside = 0
+    //ocena za izven mej
+    var pointsOutside = 0 // Preveri če so VSE točke znotraj mej - če ne, ne more biti 100%
     var pointsInside = 0
     for (p in userPath) {
         if (region.contains(p.x.toInt(), p.y.toInt())) {
@@ -279,15 +318,14 @@ fun calculateMatchPercentInside(userPath: List<Offset>, letterPath: Path): Float
             pointsOutside++
         }
     }
-
     // Če je več kot 5% točk izven mej, takoj vrni nižji %
     val outsidePercent = (pointsOutside.toFloat() / userPath.size) * 100f
-    if (outsidePercent > 5f) {
+    if (outsidePercent > 10f) { //veči za večjo toleranco
         // Vrni maksimalno 95% če riše izven mej
         return (95f * (pointsInside.toFloat() / userPath.size)).coerceAtMost(95f)
     }
 
-    // Grid spacing - preverjamo vsako vrstico (lahko prilagodiš)
+    // Grid spacing - preverjamo vsako vrstico
     val rowSpacing = 5f
     val edgeTolerance = 80 // Toleranca na vrhu in dnu (v pixlih)
     val topY = bounds.top.toInt() + edgeTolerance
