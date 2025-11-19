@@ -66,7 +66,7 @@ fun LetterGameScreen(mode: String) {
     // Observe DataStore progress
     val progress by repo.progressFlow.collectAsState(initial = Progress())
 
-    // urejen list v SLO
+    // urejen klio
     val collator = Collator.getInstance(Locale("sl", "SI")) // slovenski locale
     val assetLetters = remember {
         (context.assets.list("abeceda") ?: arrayOf("A"))
@@ -304,66 +304,60 @@ fun calculateMatchPercentInside(userPath: List<Offset>, letterPath: Path): Float
     val bounds = RectF()
     androidPath.computeBounds(bounds, true)
 
-    if (bounds.isEmpty || bounds.height() <= 0) return 0f// Če meje niso veljavne, vrni 0
+    if (bounds.isEmpty || bounds.height() <= 0) return 0f
 
     val region = letterPath.toRegion()
 
-    //ocena za izven mej
-    var pointsOutside = 0 // Preveri če so VSE točke znotraj mej - če ne, ne more biti 100%
-    var pointsInside = 0
-    for (p in userPath) {
-        if (region.contains(p.x.toInt(), p.y.toInt())) {
-            pointsInside++
-        } else {
-            pointsOutside++
+    // KORAK 1: Preveri da je VSE narisano ZNOTRAJ mej črke
+    var outsideCount = 0
+    for (point in userPath) {
+        if (!region.contains(point.x.toInt(), point.y.toInt())) {
+            outsideCount++
         }
     }
-    // Če je več kot 5% točk izven mej, takoj vrni nižji %
-    val outsidePercent = (pointsOutside.toFloat() / userPath.size) * 100f
-    if (outsidePercent > 10f) { //veči za večjo toleranco
-        // Vrni maksimalno 95% če riše izven mej
-        return (95f * (pointsInside.toFloat() / userPath.size)).coerceAtMost(95f)
+
+    // Če je več kot 10% izven mej -> takoj 0%
+    val outsidePercent = (outsideCount.toFloat() / userPath.size) * 100f
+    if (outsidePercent > 10f) {
+        return 0f
     }
 
-    // Grid spacing - preverjamo vsako vrstico
-    val rowSpacing = 5f
-    val edgeTolerance = 80 // Toleranca na vrhu in dnu (v pixlih)
+    // KORAK 2: Gledaj SAMO višino črke - ali so vse vrstice pokrite
+    val edgeTolerance = 80  // Ne preverjamo prvih/zadnjih 80px
     val topY = bounds.top.toInt() + edgeTolerance
     val bottomY = bounds.bottom.toInt() - edgeTolerance
 
-    // Najdi vse Y koordinate ki jih uporabnik narisal
-    val userYCoords = userPath.map { it.y.toInt() }.toSet()
+    if (bottomY <= topY) return 0f  // Če ni dovolj prostora
 
-    // Preveri koliko vrstic je pokritih
-    var totalRows = 0
-    var coveredRows = 0
+    // Zberi vse Y koordinate kjer je otrok risal
+    val userYCoordinates = userPath.map { it.y.toInt() }.toSet()
 
-    var y = topY
-    while (y <= bottomY) {
-        // Preveri če ta vrstica seka črko (tj. ali ima črka vsaj en pixel v tej vrstici)
-        var rowIntersectsLetter = false
-        for (x in bounds.left.toInt()..bounds.right.toInt()) {
-            if (region.contains(x, y)) {
-                rowIntersectsLetter = true
-                break
-            }
+    // Preveri vsako vrstico od topY do bottomY
+    val rowHeight = 5  // Preverjamo vsako 5. vrstico
+    val tolerance = 15  // Toleranca ± 15 pixlov
+
+    var totalRowsNeeded = 0
+    var rowsCovered = 0
+
+    var currentY = topY
+    while (currentY <= bottomY) {
+        totalRowsNeeded++
+
+        // Preveri če je otrok risal v tem območju (currentY ± tolerance)
+        val hasCoverage = userYCoordinates.any { userY ->
+            userY >= (currentY - tolerance) && userY <= (currentY + tolerance)
         }
 
-        if (rowIntersectsLetter) {
-            totalRows++
-            // Preveri če je uporabnik narisal v tej vrstici (z tolerance)
-            val tolerance = rowSpacing.toInt() + 5
-            val rowCovered = userYCoords.any { userY ->
-                userY in (y - tolerance)..(y + tolerance)
-            }
-            if (rowCovered) coveredRows++
+        if (hasCoverage) {
+            rowsCovered++
         }
 
-        y += rowSpacing.toInt()
+        currentY += rowHeight
     }
 
-    return if (totalRows > 0) {
-        (coveredRows.toFloat() / totalRows) * 100f
+    // Izračunaj odstotek pokritih vrstic
+    return if (totalRowsNeeded > 0) {
+        (rowsCovered.toFloat() / totalRowsNeeded) * 100f
     } else {
         0f
     }
