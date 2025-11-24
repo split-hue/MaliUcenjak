@@ -63,29 +63,22 @@ fun LetterGameScreen(mode: String) {
     var matchPercent by remember { mutableStateOf(0f) }
     var letterPath by remember { mutableStateOf(Path()) }
 
-    // Observe DataStore progress
     val progress by repo.progressFlow.collectAsState(initial = Progress())
 
-    // urejen klio
-    val collator = Collator.getInstance(Locale("sl", "SI")) // slovenski locale
+    val collator = Collator.getInstance(Locale("sl", "SI"))
     val assetLetters = remember {
         (context.assets.list("abeceda") ?: arrayOf("A"))
             .map { it.removeSuffix(".svg") }
             .sortedWith { a, b -> collator.compare(a, b) }
     }
 
-    // Current letter
     var currentLetter by remember { mutableStateOf("") }
     var isInitialized by remember { mutableStateOf(false) }
 
-    //za glas-to-text
     var showSpeechDialog by remember { mutableStateOf(false) }
     var speechCorrect by remember { mutableStateOf<Boolean?>(null) }
-
     var lastSpoken by remember { mutableStateOf("") }
 
-
-    // --- Update letterPath whenever currentLetter changes ---
     LaunchedEffect(currentLetter, context) {
         if (currentLetter.isNotEmpty()) {
             val rawPath = loadSvgPath(context, "$currentLetter.svg")
@@ -95,12 +88,10 @@ fun LetterGameScreen(mode: String) {
         }
     }
 
-    // Load next letter
     fun loadNextLetter() {
         segments.clear()
         currentSegment.clear()
         matchPercent = 0f
-
         val learned = progress.completedLetters.toSet()
         currentLetter = when (mode) {
             "repeat" -> learned.randomOrNull() ?: ""
@@ -109,9 +100,7 @@ fun LetterGameScreen(mode: String) {
         }
     }
 
-    // --- Load initial letter only once when screen opens ---
     LaunchedEffect(Unit) {
-        // Wait for progress to be loaded
         repo.progressFlow.collect { loadedProgress ->
             if (!isInitialized) {
                 isInitialized = true
@@ -144,7 +133,6 @@ fun LetterGameScreen(mode: String) {
             }
     ) {
 
-        // --- Canvas ---
         Canvas(modifier = Modifier.fillMaxSize()) {
             if (!letterPath.isEmpty) {
                 drawPath(
@@ -153,7 +141,6 @@ fun LetterGameScreen(mode: String) {
                     style = Fill
                 )
             }
-
             val region = letterPath.toRegion()
             for (segment in segments) drawSegmentWithFeedback(segment, region)
             drawSegmentWithFeedback(currentSegment, region)
@@ -169,11 +156,8 @@ fun LetterGameScreen(mode: String) {
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
                 if (matchPercent >= 95f && currentLetter.isNotEmpty()) {
-
-                    // Prikaži dialog za govor
                     showSpeechDialog = true
                 }
-
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
         ) { Text("Preveri") }
@@ -194,20 +178,16 @@ fun LetterGameScreen(mode: String) {
             enabled = repeatEnabled
         ) { Text("→") }
 
-        // --- Info Texts ---
+        // --- Info ---
         Text(
             text = "Ujemanje: ${matchPercent.toInt()}%",
             modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
         )
-
-        // Debug: show current letter
         Text(
             text = "Črka: $currentLetter",
             color = Color.Red,
             modifier = Modifier.align(Alignment.Center)
         )
-
-        // Message if no learned letters in repeat mode
         if (mode == "repeat" && progress.completedLetters.isEmpty()) {
             Text("Ne poznam še nobene črke", modifier = Modifier.align(Alignment.Center))
         }
@@ -217,15 +197,11 @@ fun LetterGameScreen(mode: String) {
                 onResult = { spoken ->
                     lastSpoken = spoken
                     speechCorrect = spoken.equals(currentLetter, ignoreCase = true)
-
-                    // SHRAMBA: samo če je govor pravilen
                     if (speechCorrect == true && currentLetter !in progress.completedLetters) {
                         coroutineScope.launch { repo.addLetter(currentLetter) }
                     }
                 },
-                onClose = {
-                    showSpeechDialog = false
-                }
+                onClose = { showSpeechDialog = false }
             )
         }
         speechCorrect?.let { ok ->
@@ -234,11 +210,11 @@ fun LetterGameScreen(mode: String) {
                 color = Color.Magenta,
                 modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
             )
-
         }
 
     }
 }
+
 
 // --- Drawing helpers ---
 fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
