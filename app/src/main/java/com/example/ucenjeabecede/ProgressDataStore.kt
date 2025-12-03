@@ -1,6 +1,5 @@
 package com.example.ucenjeabecede
 
-
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
@@ -8,13 +7,19 @@ import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
 import androidx.datastore.dataStore
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 import java.io.InputStream
 import java.io.OutputStream
 
 @kotlinx.serialization.InternalSerializationApi
-// Serializer for Progress using kotlinx.serialization
+@Serializable
+data class Progress(
+    val completedLetters: List<String> = emptyList()
+)
+
+@kotlinx.serialization.InternalSerializationApi
 object ProgressSerializer : Serializer<Progress> {
     override val defaultValue: Progress = Progress()
 
@@ -30,7 +35,6 @@ object ProgressSerializer : Serializer<Progress> {
         }
     }
 
-
     override suspend fun writeTo(t: Progress, output: OutputStream) {
         withContext(Dispatchers.IO) {
             val text = Json.encodeToString(Progress.serializer(), t)
@@ -39,8 +43,6 @@ object ProgressSerializer : Serializer<Progress> {
     }
 }
 
-
-// DataStore property on Context
 @kotlinx.serialization.InternalSerializationApi
 val Context.progressStore: DataStore<Progress> by dataStore(
     fileName = "napredek.json",

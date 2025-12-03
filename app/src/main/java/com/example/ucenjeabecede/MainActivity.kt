@@ -5,15 +5,21 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.example.ucenjeabecede.ui.theme.*
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlinx.serialization.InternalSerializationApi
 
@@ -34,40 +40,51 @@ class MainActivity : ComponentActivity() {
 fun WelcomeScreen() {
     val context = LocalContext.current
 
-    var completedLetters by remember { mutableStateOf(listOf<String>()) }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(GreenBACK) // zeleno ozadje
+            .padding(24.dp)
+    ) {
 
-
-    Box(modifier = Modifier.fillMaxSize()) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Top
+                .fillMaxWidth()
+                .padding(top=50.dp)
+                .background(
+                    color = Color.White,
+                    shape = RoundedCornerShape(28.dp)
+                )
+                .padding(24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+
             Text(
-                "Dobrodošli v Mali Učenjak!",
-                style = MaterialTheme.typography.headlineMedium
+                "Živijo,\nMali Učenjak!",
+                textAlign = TextAlign.Center,
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = GreenBACK
             )
-            Spacer(modifier = Modifier.height(16.dp))
-            Text("Kliknite spodnji gumb, da začnete risati črke.")
-            Spacer(modifier = Modifier.height(32.dp))
 
-            // Gumbi za začetek igre
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp)
+            Spacer(Modifier.height(18.dp))
+
+            Text(
+                "Pridruži se mi na dogodivščini spoznanja črk.",
+                style = MaterialTheme.typography.bodyLarge
+            )
+
+            Spacer(Modifier.height(32.dp))
+
+            Button(
+                onClick = {
+                    context.startActivity(Intent(context, MainMenuActivity::class.java))
+                },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(20.dp)
             ) {
-                Button(onClick = {
-                    val intent = Intent(context, MainMenuActivity::class.java)
-                    context.startActivity(intent)
-                }) {
-                    Text("Začni igro")
-                }
+                Text("Začni igro")
             }
-
-            Spacer(modifier = Modifier.height(32.dp))
-
-
         }
     }
 }

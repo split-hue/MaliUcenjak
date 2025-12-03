@@ -27,6 +27,11 @@ import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.example.ucenjeabecede.components.Check
+import com.example.ucenjeabecede.components.Erasor
+import com.example.ucenjeabecede.components.Home
+import com.example.ucenjeabecede.components.Next
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -146,51 +151,57 @@ fun LetterGameScreen(mode: String) {
             drawSegmentWithFeedback(currentSegment, region)
         }
 
-        // --- Buttons ---
-        Button(
+        //-------------gumbi---------------
+        Home(
             onClick = { context.startActivity(android.content.Intent(context, MainMenuActivity::class.java)) },
-            modifier = Modifier.align(Alignment.TopEnd).padding(16.dp)
-        ) { Text("Domov") }
+            modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
+        )
 
-        Button(
+        Check(
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
                 if (matchPercent >= 95f && currentLetter.isNotEmpty()) {
                     showSpeechDialog = true
                 }
             },
-            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp)
-        ) { Text("Preveri") }
+            modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp, bottom = 70.dp)
+        )
 
-        Button(
+        Erasor(
             onClick = {
-                segments.clear()
-                currentSegment.clear()
-                matchPercent = 0f
-            },
-            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp)
-        ) { Text("Pobriši") }
-
-        val repeatEnabled = mode != "repeat" || progress.completedLetters.isNotEmpty()
-        Button(
-            onClick = { loadNextLetter() },
-            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp),
-            enabled = repeatEnabled
-        ) { Text("→") }
-
-        // --- Info ---
-        Text(
-            text = "Ujemanje: ${matchPercent.toInt()}%",
-            modifier = Modifier.align(Alignment.TopCenter).padding(16.dp)
+            segments.clear()
+            currentSegment.clear()
+            matchPercent = 0f
+        },
+            modifier = Modifier.align(Alignment.BottomStart).padding(16.dp, bottom = 60.dp)
         )
+
+        //gumb je zdej na pop-upu
+//        val repeatEnabled = mode != "repeat" || progress.completedLetters.isNotEmpty()
+//        Next(
+//            onClick = { loadNextLetter() },
+//            modifier = Modifier.align(Alignment.BottomEnd).padding(16.dp, bottom = 60.dp, end = 20.dp),
+//            enabled = repeatEnabled
+//        )
+
+
+
+        // --- info uspešnost
         Text(
-            text = "Črka: $currentLetter",
-            color = Color.Red,
-            modifier = Modifier.align(Alignment.Center)
+            text = "${matchPercent.toInt()}%",
+            fontSize = 24.sp,
+            modifier = Modifier.align(Alignment.TopStart).padding(top = 20.dp, start = 20.dp)
         )
-        if (mode == "repeat" && progress.completedLetters.isEmpty()) {
-            Text("Ne poznam še nobene črke", modifier = Modifier.align(Alignment.Center))
-        }
+        //-- info --
+//        Text(
+//            text = "Črka: $currentLetter",
+//            color = Color.Red,
+//            modifier = Modifier.align(Alignment.Center)
+//        )
+        //????
+//        if (mode == "repeat" && progress.completedLetters.isEmpty()) {
+//            Text("Ne poznam še nobene črke", modifier = Modifier.align(Alignment.Center))
+//        }
         if (showSpeechDialog) {
             SpeechDialog(
                 letter = currentLetter,
@@ -201,22 +212,23 @@ fun LetterGameScreen(mode: String) {
                         coroutineScope.launch { repo.addLetter(currentLetter) }
                     }
                 },
+                onNext = { loadNextLetter() },
                 onClose = { showSpeechDialog = false }
             )
         }
-        speechCorrect?.let { ok ->
-            Text(
-                text = "Govor: \"$lastSpoken\"",
-                color = Color.Magenta,
-                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
-            )
-        }
+//        speechCorrect?.let { ok ->
+//            Text(
+//                text = "Govor: \"$lastSpoken\"",
+//                color = Color.Magenta,
+//                modifier = Modifier.align(Alignment.TopStart).padding(16.dp)
+//            )
+//        }
 
     }
 }
 
 
-// --- Drawing helpers ---
+// ---pomagači za risanje lmao
 fun DrawScope.drawSegmentWithFeedback(segment: List<Offset>, region: Region) {
     if (segment.size > 1) {
         for (i in 0 until segment.size - 1) {

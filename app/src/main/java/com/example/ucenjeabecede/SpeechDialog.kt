@@ -11,6 +11,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.example.ucenjeabecede.components.Next
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -23,6 +24,7 @@ import java.net.URLEncoder
 fun SpeechDialog(
     letter: String,
     onResult: (String) -> Unit,
+    onNext: () -> Unit,  // Add this parameter
     onClose: () -> Unit
 ) {
 
@@ -82,14 +84,26 @@ fun SpeechDialog(
             onClose()
         },
         confirmButton = {
-            Button(onClick = {
-                mediaPlayer?.release()
-                onClose()
-            }) {
-                Text("X")
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Next(
+                    onClick = {
+                        mediaPlayer?.release()
+                        onNext()
+                        onClose()
+                })
+
+//                Button(onClick = {
+//                    mediaPlayer?.release()
+//                    onClose()
+//                }) {
+//                    Text("X")
+//                }
             }
         },
-        title = { Text("Izgovori črko »$letter« 👂🏻") },
+        title = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Text("Izgovori črko: ${letter.uppercase()}")
+            }},
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (isPlaying) {
@@ -106,7 +120,7 @@ fun SpeechDialog(
                 )
 
                 if (finalText.isNotBlank()) {
-                    Text("Končno :): $finalText", color = MaterialTheme.colorScheme.onSurface)
+                    Text("Končno: $finalText", color = MaterialTheme.colorScheme.onSurface)
                 }
 
                 if (startListening) {
