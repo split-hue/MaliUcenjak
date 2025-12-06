@@ -31,7 +31,6 @@ import androidx.compose.ui.unit.sp
 import com.example.ucenjeabecede.components.Check
 import com.example.ucenjeabecede.components.Erasor
 import com.example.ucenjeabecede.components.Home
-import com.example.ucenjeabecede.components.Next
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
@@ -153,8 +152,10 @@ fun LetterGameScreen(mode: String) {
 
         //-------------gumbi---------------
         Home(
-            onClick = { context.startActivity(android.content.Intent(context, MainMenuActivity::class.java)) },
-            modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
+            onClick = {
+                context.startActivity(android.content.Intent(context, MainMenuActivity::class.java))
+                SoundPlayer.playPop(context)},
+            modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
         )
 
         Check(
@@ -190,7 +191,7 @@ fun LetterGameScreen(mode: String) {
         Text(
             text = "${matchPercent.toInt()}%",
             fontSize = 24.sp,
-            modifier = Modifier.align(Alignment.TopStart).padding(top = 20.dp, start = 20.dp)
+            modifier = Modifier.align(Alignment.TopEnd).padding(top = 35.dp, end = 30.dp)
         )
         //-- info --
 //        Text(

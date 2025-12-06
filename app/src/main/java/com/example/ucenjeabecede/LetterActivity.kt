@@ -1,9 +1,5 @@
 package com.example.ucenjeabecede
 
-import android.content.Context
-import android.graphics.Matrix
-import android.graphics.RectF
-import android.graphics.Region
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -11,7 +7,6 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,10 +15,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.asAndroidPath
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Fill
-import androidx.compose.ui.graphics.vector.PathParser
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -31,7 +23,7 @@ import androidx.compose.ui.unit.sp
 import com.example.ucenjeabecede.components.Check
 import com.example.ucenjeabecede.components.Erasor
 import com.example.ucenjeabecede.components.Home
-import com.example.ucenjeabecede.components.Next
+import com.example.ucenjeabecede.components.SoundLetter
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlin.math.min
 
@@ -110,15 +102,24 @@ fun SingleLetterGameScreenGL(letter: String) {
 
         //-------------gumbi---------------
         Home(
-            onClick = { context.startActivity(android.content.Intent(context, MainMenuActivity::class.java)) },
-            modifier = Modifier.align(Alignment.TopEnd).padding(10.dp)
+            onClick = { context.startActivity(android.content.Intent(context, MainMenuActivity::class.java))
+                SoundPlayer.playPop(context)}, //<<<< sound efekt
+            modifier = Modifier.align(Alignment.TopStart).padding(10.dp)
+        )
+
+        SoundLetter(
+            onClick = {
+                SoundPlayer.crka(context, letter)
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(16.dp, bottom = 60.dp, end = 18.dp)
         )
 
         Check(
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
                 if (matchPercent >= 95f && letter.isNotEmpty()) {
-                //tuki dej da se izgovori črka <<<<<<<<<
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp, bottom = 70.dp)
@@ -137,7 +138,7 @@ fun SingleLetterGameScreenGL(letter: String) {
         Text(
             text = "${matchPercent.toInt()}%",
             fontSize = 24.sp,
-            modifier = Modifier.align(Alignment.TopStart).padding(top = 20.dp, start = 20.dp)
+            modifier = Modifier.align(Alignment.TopEnd).padding(top = 35.dp, end = 30.dp)
         )
 
 

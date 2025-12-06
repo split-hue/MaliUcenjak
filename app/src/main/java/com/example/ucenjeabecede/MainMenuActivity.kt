@@ -24,6 +24,10 @@ import com.example.ucenjeabecede.ui.theme.GreenBACK
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 
 class MainMenuActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -206,36 +210,111 @@ fun DebugProgressUI(repo: ProgressRepository) {
             .fillMaxWidth()
             .padding(16.dp)
     ) {
-//        Text("DEBUG: trenutni seznam naučenih črk:", modifier = Modifier.padding(bottom = 8.dp))
-//        progress.completedLetters.forEach { letter ->
-//            Text(letter)
-//        }
-//
-//        Spacer(modifier = Modifier.height(8.dp))
-//
-//        Button(onClick = {
-//            coroutineScope.launch {
-//                repo.setLetters(listOf("A","B")) // ročno nastavi test črke
+
+        ClearWithRandomConfirmation(repo)
+
+//        Row(
+//            horizontalArrangement = Arrangement.spacedBy(16.dp),
+//            verticalAlignment = Alignment.CenterVertically
+//        ) {
+//            Button(onClick = {
+//                coroutineScope.launch {
+//                    repo.clearLetters()
+//                }
+//            }) {
+//                Text("Pobriši vse črke")
 //            }
-//        }) {
-//            Text("Nastavi test črke A,B")
-//        }
 //
-//        Spacer(modifier = Modifier.height(8.dp))
+////            Exit()
+//        }
+    }
+}
 
-        Row(
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Button(onClick = {
-                coroutineScope.launch {
-                    repo.clearLetters()
-                }
-            }) {
-                Text("Pobriši vse črke")
-            }
+@OptIn(InternalSerializationApi::class)
+@Composable
+fun ClearWithRandomConfirmation(repo: ProgressRepository) {
+    val coroutineScope = rememberCoroutineScope()
 
-            Exit()
+    var showDialog by remember { mutableStateOf(false) }
+
+    // Naključni račun
+    var a by remember { mutableStateOf(0) }
+    var b by remember { mutableStateOf(0) }
+    var operator by remember { mutableStateOf("+") }
+    var correctResult by remember { mutableStateOf(0) }
+
+    var answer by remember { mutableStateOf("") }
+    var error by remember { mutableStateOf(false) }
+
+    fun generateRandomProblem() {
+        a = (1..10).random()
+        b = (1..10).random()
+        operator = listOf("+", "-").random()
+
+        correctResult = when (operator) {
+            "+" -> a + b
+            "-" -> a - b
+            else -> 0
         }
+    }
+
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Button(onClick = {
+            generateRandomProblem()
+            answer = ""
+            error = false
+            showDialog = true
+        }) {
+            Text("Pobriši vse črke")
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Potrditev") },
+            text = {
+                Column {
+                    Text("Za potrditev reši račun: $a $operator $b = ?")
+                    Spacer(Modifier.height(8.dp))
+                    TextField(
+                        value = answer,
+                        onValueChange = {
+                            answer = it
+                            error = false
+                        },
+                        isError = error,
+                        singleLine = true
+                    )
+                    if (error) {
+                        Text(
+                            "Napačen rezultat!",
+                            color = Color.Red,
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                Button(onClick = {
+                    if (answer.trim().toIntOrNull() == correctResult) {
+                        coroutineScope.launch { repo.clearLetters() }
+                        showDialog = false
+                    } else {
+                        error = true
+                    }
+                }) {
+                    Text("Potrdi")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Prekliči")
+                }
+            }
+        )
     }
 }

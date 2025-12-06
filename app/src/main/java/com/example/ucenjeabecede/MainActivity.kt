@@ -1,6 +1,7 @@
 package com.example.ucenjeabecede
 
 import android.content.Intent
+import android.media.MediaPlayer
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -39,6 +40,12 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun WelcomeScreen() {
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        val player = MediaPlayer.create(context, R.raw.matija1)
+        player.setOnCompletionListener { it.release() }
+        player.start()
+    }
 
     Box(
         modifier = Modifier

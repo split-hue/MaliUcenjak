@@ -87,6 +87,7 @@ fun SpeechDialog(
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Next(
                     onClick = {
+                        SoundPlayer.playPop(context)// <<<<<< sound efekt
                         mediaPlayer?.release()
                         onNext()
                         onClose()
@@ -107,9 +108,9 @@ fun SpeechDialog(
         text = {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 if (isPlaying) {
-                    Text("Predvajam zvok...", color = MaterialTheme.colorScheme.primary)
+                    Text("Predvajam zvok...", color = MaterialTheme.colorScheme.primary)//barve
                 } else {
-                    Text("Poslušam...", color = MaterialTheme.colorScheme.secondary)
+                    Text("Poslušam...", color = MaterialTheme.colorScheme.secondary) //barveeeeee
                 }
 
                 Spacer(Modifier.height(10.dp))
@@ -121,6 +122,7 @@ fun SpeechDialog(
 
                 if (finalText.isNotBlank()) {
                     Text("Končno: $finalText", color = MaterialTheme.colorScheme.onSurface)
+
                 }
 
                 if (startListening) {

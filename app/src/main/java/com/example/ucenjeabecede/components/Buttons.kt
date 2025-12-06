@@ -15,22 +15,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.example.ucenjeabecede.R
+import com.example.ucenjeabecede.SoundPlayer
 
 
-@Composable
-fun PrimaryButton(
-    text: String,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) {
-    Button(
-        onClick = onClick,
-        modifier = modifier,
-        shape = MaterialTheme.shapes.medium
-    ) {
-        Text(text)
-    }
-}
+//@Composable
+//fun PrimaryButton(
+//    text: String,
+//    modifier: Modifier = Modifier,
+//    onClick: () -> Unit
+//) {
+//    Button(
+//        onClick = onClick,
+//        modifier = modifier,
+//        shape = MaterialTheme.shapes.medium
+//    ) {
+//        Text(text)
+//    }
+//}
 
 @Composable
 fun ImageButtonPonoviCrke(
@@ -68,22 +69,22 @@ fun ImageButtonNoveCrke(
     }
 }
 //============================
-@Composable
-fun Exit(modifier: Modifier = Modifier) {
-    val context = LocalContext.current
-    IconButton(
-        onClick = {
-            (context as? ComponentActivity)?.finish()
-        },
-        modifier = modifier.size(500.dp)
-    ) {
-        Image(
-            painter = painterResource(id = R.drawable.izhod),
-            contentDescription = "izhod",
-            modifier = Modifier.size(190.dp)
-        )
-    }
-}
+//@Composable
+//fun Exit(modifier: Modifier = Modifier) {
+//    val context = LocalContext.current
+//    IconButton(
+//        onClick = {
+//            (context as? ComponentActivity)?.finish()
+//        },
+//        modifier = modifier.size(500.dp)
+//    ) {
+//        Image(
+//            painter = painterResource(id = R.drawable.izhod),
+//            contentDescription = "izhod",
+//            modifier = Modifier.size(190.dp)
+//        )
+//    }
+//}
 //============================
 @Composable
 fun Erasor(
@@ -149,6 +150,23 @@ fun Check(
             painter = painterResource(id = R.drawable.preveri),
             contentDescription = "Nove črke",
             modifier = Modifier.size(100.dp)
+        )
+    }
+}
+@Composable
+fun SoundLetter(
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+
+) {
+    IconButton(
+        onClick = onClick,
+        modifier = modifier.size(90.dp)
+    ) {
+        Image(
+            painter = painterResource(id = R.drawable.zvocnik),
+            contentDescription = "crka poslušaj",
+            modifier = Modifier.size(80.dp)
         )
     }
 }
