@@ -8,14 +8,15 @@ import android.speech.SpeechRecognizer
 import android.util.Log
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
-import kotlinx.coroutines.delay
 
 @Composable
 fun UseSpeechRecognizer(
     listenSeconds: Long = 4000,
     onPartial: (String) -> Unit,
     onFinal: (String) -> Unit,
-
+    onReady: () -> Unit = {},
+    onSpeechStart: () -> Unit = {},
+    onSpeechEnd: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val recognizer = remember { SpeechRecognizer.createSpeechRecognizer(context) }
@@ -29,6 +30,21 @@ fun UseSpeechRecognizer(
 
     LaunchedEffect(Unit) {
         val listener = object : RecognitionListener {
+
+            override fun onReadyForSpeech(params: Bundle?) {
+                Log.d("SPEECH", "Ready for speech")
+                onReady()
+            }
+
+            override fun onBeginningOfSpeech() {
+                Log.d("SPEECH", "User started talking")
+                onSpeechStart()
+            }
+
+            override fun onEndOfSpeech() {
+                Log.d("SPEECH", "User stopped talking")
+                onSpeechEnd()
+            }
 
             override fun onPartialResults(results: Bundle?) {
                 val list = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -49,24 +65,15 @@ fun UseSpeechRecognizer(
                 onFinal("")
             }
 
-            override fun onReadyForSpeech(params: Bundle?) {
-                Log.d("SPEECH", "Ready for speech")
-            }
-
-            override fun onBeginningOfSpeech() {
-                Log.d("SPEECH", "User started talking")
-            }
-
             override fun onRmsChanged(rms: Float) {}
             override fun onBufferReceived(p0: ByteArray?) {}
-            override fun onEndOfSpeech() {}
             override fun onEvent(p0: Int, p1: Bundle?) {}
         }
 
         recognizer.setRecognitionListener(listener)
         recognizer.startListening(intent)
 
-        delay(listenSeconds)
+        kotlinx.coroutines.delay(listenSeconds)
         recognizer.stopListening()
     }
 

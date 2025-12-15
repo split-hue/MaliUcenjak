@@ -6,10 +6,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -17,6 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -74,23 +77,32 @@ fun WelcomeScreen() {
                 color = GreenBACK
             )
 
-            Spacer(Modifier.height(18.dp))
+            //Spacer(Modifier.height(1.dp))
 
-            Text(
-                "Pridruži se mi na dogodivščini spoznanja črk.",
-                style = MaterialTheme.typography.bodyLarge
+            Image(
+                painter = painterResource(id = R.drawable.balon),
+                contentDescription = "mja mjau balon",
+                modifier = Modifier
+                    .size(300.dp)
+                    //.padding(vertical = 0.dp)
             )
 
-            Spacer(Modifier.height(32.dp))
+//            Text(
+//                "Pridruži se mi na dogodivščini spoznanja črk.",
+//                style = MaterialTheme.typography.bodyLarge
+//            )
+
+            Spacer(Modifier.height(16.dp))
 
             Button(
                 onClick = {
                     context.startActivity(Intent(context, MainMenuActivity::class.java))
+                    SoundPlayer.playPop(context)
                 },
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(20.dp)
             ) {
-                Text("Začni igro")
+                Text("ŠTART")
             }
         }
     }

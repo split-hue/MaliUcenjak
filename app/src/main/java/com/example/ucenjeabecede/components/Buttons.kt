@@ -55,16 +55,19 @@ fun ImageButtonPonoviCrke(
 @Composable
 fun ImageButtonNoveCrke(
     onClick: () -> Unit,
+    enabled: Boolean = true, //ravno obratno je logika spisana (če vsebuje ž, onemogoči)
     modifier: Modifier = Modifier,
 ) {
     IconButton(
-        onClick = onClick,
+        onClick = { if (enabled) onClick() },
         modifier = modifier.size(102.dp)
     ) {
         Image(
             painter = painterResource(id = R.drawable.nove_crke),
             contentDescription = "Nove črke",
-            modifier = Modifier.size(90.dp) //velikost ikone v gumbu
+            modifier = Modifier
+                .size(90.dp) //velikost ikone v gumbu
+                .alpha(if (enabled) 1f else 0.3f)
         )
     }
 }
@@ -177,8 +180,16 @@ fun Acrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
+
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -196,8 +207,15 @@ fun Bcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -215,8 +233,15 @@ fun Ccrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -234,8 +259,15 @@ fun CCcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -253,8 +285,15 @@ fun Dcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -272,8 +311,15 @@ fun Ecrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -291,8 +337,15 @@ fun Fcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -310,8 +363,15 @@ fun Gcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -329,8 +389,15 @@ fun Hcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -348,8 +415,15 @@ fun Icrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -367,8 +441,15 @@ fun Jcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -386,8 +467,15 @@ fun Kcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -405,8 +493,15 @@ fun Lcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -424,8 +519,15 @@ fun Mcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -443,8 +545,15 @@ fun Ncrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -462,8 +571,15 @@ fun Ocrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -481,8 +597,15 @@ fun Pcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -500,8 +623,15 @@ fun Rcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -519,8 +649,15 @@ fun Scrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -538,8 +675,15 @@ fun SScrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -557,8 +701,15 @@ fun Tcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -576,8 +727,15 @@ fun Ucrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -595,8 +753,15 @@ fun Vcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -614,8 +779,15 @@ fun Zcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(
@@ -633,8 +805,15 @@ fun ZZcrka(
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     IconButton(
-        onClick = { if (enabled) onClick() },
+        onClick = {
+            if (enabled) {
+                onClick()
+            } else {
+                SoundPlayer.playError(context)
+            }
+        },
         modifier = modifier.size(102.dp)
     ) {
         Image(

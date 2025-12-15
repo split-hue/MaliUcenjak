@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
@@ -28,6 +29,8 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
 
 class MainMenuActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -78,6 +81,7 @@ fun MainMenuScreen() {
             ) {
                 ImageButtonPonoviCrke(// gumb1: ponovi črke-------------------------
                     onClick = {
+                        SoundPlayer.playPop(context)
                         context.startActivity(
                             Intent(context, LetterGameActivity::class.java).apply {
                                 putExtra("mode", "repeat")
@@ -91,12 +95,15 @@ fun MainMenuScreen() {
 
                 ImageButtonNoveCrke(// gumb2: nove črke------------------------
                     onClick = {
+                        SoundPlayer.playPop(context)
                         context.startActivity(
                             Intent(context, LetterGameActivity::class.java).apply {
                                 putExtra("mode", "new")
                             }
+
                         )
-                    },
+                    }, //če vsebuje *ž* onemogoči gumb
+                    enabled = !completedLetters.any { it.equals("ž", ignoreCase = true) }
                 ) //-------------------------------------------------------------
             }
 
@@ -146,7 +153,6 @@ fun MainMenuScreen() {
                 contentPadding = PaddingValues(0.dp)
             ) {
                 items(letters) { letter ->
-
                     LetterButton(
                         letter = letter,
                         enabled = completedLetters.contains(letter),
@@ -154,11 +160,11 @@ fun MainMenuScreen() {
                             val intent = Intent(context, LetterActivity::class.java)
                             intent.putExtra("letter", letter)
                             context.startActivity(intent)
+                            SoundPlayer.playPop(context)
                         }
                     )
                 }
             }
-
 //            // --- DEBUG UI ---
             DebugProgressUI(repo = repo)
         }
@@ -230,7 +236,7 @@ fun DebugProgressUI(repo: ProgressRepository) {
     }
 }
 
-@OptIn(InternalSerializationApi::class)
+@OptIn(InternalSerializationApi::class)//*****************račun pop-up********
 @Composable
 fun ClearWithRandomConfirmation(repo: ProgressRepository) {
     val coroutineScope = rememberCoroutineScope()
@@ -275,10 +281,10 @@ fun ClearWithRandomConfirmation(repo: ProgressRepository) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Potrditev") },
+            title = { Text("Pobrišem vse črke?") },
             text = {
                 Column {
-                    Text("Za potrditev reši račun: $a $operator $b = ?")
+                    Text("Da ponastaviš aplikacijo, reši račun:\n\t\t $a $operator $b = ?")
                     Spacer(Modifier.height(8.dp))
                     TextField(
                         value = answer,
@@ -287,7 +293,11 @@ fun ClearWithRandomConfirmation(repo: ProgressRepository) {
                             error = false
                         },
                         isError = error,
-                        singleLine = true
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(
+                            keyboardType = KeyboardType.Number,
+                            imeAction = ImeAction.Done
+                        )
                     )
                     if (error) {
                         Text(

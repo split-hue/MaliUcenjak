@@ -25,6 +25,7 @@ import com.example.ucenjeabecede.components.Erasor
 import com.example.ucenjeabecede.components.Home
 import com.example.ucenjeabecede.components.SoundLetter
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
+import kotlinx.coroutines.launch
 import kotlin.math.min
 
 class LetterActivity : ComponentActivity() {
@@ -119,7 +120,9 @@ fun SingleLetterGameScreenGL(letter: String) {
         Check(
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
-                if (matchPercent >= 95f && letter.isNotEmpty()) {
+                if (matchPercent >= 70f && letter.isNotEmpty()) {
+                    SoundPlayer.crka(context, letter)
+                    context.startActivity(android.content.Intent(context, MainMenuActivity::class.java))
                 }
             },
             modifier = Modifier.align(Alignment.BottomCenter).padding(16.dp, bottom = 70.dp)
@@ -130,6 +133,7 @@ fun SingleLetterGameScreenGL(letter: String) {
                 segments.clear()
                 currentSegment.clear()
                 matchPercent = 0f
+                SoundPlayer.playPop(context) // bubbles
             },
             modifier = Modifier.align(Alignment.BottomStart).padding(16.dp, bottom = 60.dp)
         )

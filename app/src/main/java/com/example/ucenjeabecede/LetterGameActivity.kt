@@ -32,6 +32,7 @@ import com.example.ucenjeabecede.components.Check
 import com.example.ucenjeabecede.components.Erasor
 import com.example.ucenjeabecede.components.Home
 import com.example.ucenjeabecede.ui.theme.UcenjeAbecedeTheme
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.InternalSerializationApi
 import kotlin.math.min
@@ -85,6 +86,7 @@ fun LetterGameScreen(mode: String) {
 
     LaunchedEffect(currentLetter, context) {
         if (currentLetter.isNotEmpty()) {
+            SoundPlayer.crka(context, currentLetter)
             val rawPath = loadSvgPath(context, "$currentLetter.svg")
             letterPath = normalizePathToCanvas(rawPath, Size(1080f, 1920f))
         } else {
@@ -102,6 +104,7 @@ fun LetterGameScreen(mode: String) {
             "new" -> assetLetters.firstOrNull { it !in learned } ?: ""
             else -> ""
         }
+        //SoundPlayer.crka(context, currentLetter)
     }
 
     LaunchedEffect(Unit) {
@@ -161,7 +164,7 @@ fun LetterGameScreen(mode: String) {
         Check(
             onClick = {
                 matchPercent = calculateMatchPercentInside(segments.flatten() + currentSegment, letterPath)
-                if (matchPercent >= 95f && currentLetter.isNotEmpty()) {
+                if (matchPercent >= 70f && currentLetter.isNotEmpty()) {
                     showSpeechDialog = true
                 }
             },

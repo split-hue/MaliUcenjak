@@ -12,12 +12,25 @@ object SoundPlayer {
         }
         popSound.start()
     }
+    fun playError(context: Context) {
+        val popSound = MediaPlayer.create(context, R.raw.error)
+        popSound.setOnCompletionListener {
+            it.release()
+        }
+        popSound.start()
+    }
 
     fun crka(context: Context, letter: String) {
-        val resId = context.resources.getIdentifier(letter, "raw", context.packageName)
+        val crke = when (letter) {
+            "š" -> "ss"
+            "č" -> "cc"
+            "ž" -> "zz"
+            else -> letter
+        }
+        val resId = context.resources.getIdentifier(crke, "raw", context.packageName)
 
         if (resId == 0) {
-            Log.e("crka", "Ga ni najdl '$letter' ne v raw/")
+            Log.e("crka", "Ga ni najdl '$crke' ne v raw/")
             return
         }
 
